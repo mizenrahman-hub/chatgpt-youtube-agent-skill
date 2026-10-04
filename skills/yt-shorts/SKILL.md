@@ -1,36 +1,47 @@
 ---
 name: yt-shorts
 description: >-
-  Find the Shorts hiding inside a long video and write them, using the
-  transcript to pick self-contained moments. Use for "cut this into shorts",
-  "clip this", "repurpose this video", "what should I clip".
+  Find self-contained Shorts inside a long video, create Turkish subtitles,
+  and render a person-tracked 9:16 preview. Use for "cut this into shorts",
+  "clip this", "repurpose this video", or "what should I clip".
 ---
 
 # yt-shorts
 
-A Short cut out of a long video is not a clip of the best moment. It is a moment that **survives
-without the video around it**, which is a much smaller set.
+A useful Short must survive without the long video around it. Work preview-first and never publish,
+schedule, overwrite, or delete content.
 
-## Picking
+## Pick the moment
 
-Read the transcript and find spans of 20-55 seconds where all three are true:
+Read the transcript and rank five spans of 20-55 seconds. Each must open on a complete thought,
+contain a turn or payoff, and end cleanly. Show timecodes and first lines, then wait for the creator's
+choice.
 
-1. It opens on a complete thought. If the first sentence needs the previous minute, it is not a Short.
-2. There is a turn in it - a claim, then something that complicates or proves it.
-3. It ends on a line, not a trail-off.
+## Prepare the package
 
-Rank the candidates and show the user the top five with their timecodes and first line, so they can
-reject one without reading the whole transcript.
+For the selected span provide:
 
-## Writing each one
+- a replacement first line that works without prior context;
+- different on-screen text for the first two seconds;
+- a loop point;
+- a vertical-framing warning when important scenery will be cropped.
 
-- **A NEW first line.** The long video's line assumes context this viewer does not have. Write the
-  replacement and run it through `../yt-script/hookscore.py`.
-- **On-screen text for the first two seconds**, different words from the spoken line.
-- **A loop point**: what the last line sets up so the first line answers it.
-- Vertical framing note - what gets cropped out of a 16:9 frame and whether that matters.
+## Render a private preview
 
-## The gate
+Install dependencies from `requirements.txt`; `ffmpeg` must also be available.
 
-Nothing here publishes. This skill writes and you publish. Every output ends in a block the user
-copies, and the last line of every run is the question: **ship it, or change it?**
+```bash
+python scripts/transcribe_tr.py input.mp4 --output captions.tr.srt
+python scripts/render_short.py input.mp4 preview.mp4 --start 30 --duration 45 \
+  --subtitles captions.tr.srt
+```
+
+The second command is a dry run by default. After the creator approves the plan, repeat it with
+`--render`. The renderer follows the largest detected face horizontally with smoothing instead of
+using a fixed center crop. If detection is temporarily lost, it holds the last safe position.
+
+## Approval gate
+
+Show the resulting preview and ask: **Yayın için onaylıyor musun, yoksa değiştirelim mi?**
+
+Do not add upload or deletion commands. Read `SAFETY.md` before changing the scripts.
