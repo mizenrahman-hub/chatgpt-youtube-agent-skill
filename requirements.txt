@@ -1,0 +1,4 @@
+# Keep the existing Shorts dependency ranges in one source of truth.
+-r skills/yt-shorts/requirements.txt
+# Imported directly by transcribe_tr.py.
+numpy>=1.26,<3
