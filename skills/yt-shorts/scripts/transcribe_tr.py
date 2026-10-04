@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -27,12 +29,22 @@ def main() -> int:
 
     try:
         from faster_whisper import WhisperModel
+        import numpy as np
     except ImportError as exc:
         raise SystemExit("Eksik paket: pip install faster-whisper") from exc
 
     output = args.output or args.input.with_suffix(".tr.srt")
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        raise SystemExit("Gerekli program bulunamadı: ffmpeg")
+    decoded = subprocess.run(
+        [ffmpeg, "-v", "error", "-i", str(args.input), "-f", "f32le", "-ac", "1", "-ar", "16000", "-"],
+        check=True,
+        stdout=subprocess.PIPE,
+    ).stdout
+    audio = np.frombuffer(decoded, dtype=np.float32)
     model = WhisperModel(args.model, device="cpu", compute_type="int8")
-    segments, _ = model.transcribe(str(args.input), language="tr", vad_filter=True)
+    segments, _ = model.transcribe(audio, language="tr", vad_filter=True)
 
     with output.open("w", encoding="utf-8") as handle:
         for index, segment in enumerate(segments, start=1):
