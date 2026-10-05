@@ -2,3 +2,5 @@
 -r skills/yt-shorts/requirements.txt
 # Imported directly by transcribe_tr.py.
 numpy>=1.26,<3
+google-api-python-client>=2.149,<3
+google-auth>=2.35,<3
