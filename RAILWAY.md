@@ -15,7 +15,12 @@ Mevcut Shorts betikleri değiştirilmemiştir; manuel komutlarla kullanılabilir
 4. Railway'in sağladığı `PORT` kullanılır (yerelde varsayılan 8080).
    Healthcheck yolu `/health`; başarılı yanıt HTTP 200 ve
    `{"status": "ok", "mode": "idle"}` olur.
-5. Bu aşamada API anahtarı veya OAuth tokeni gerekmez; depoya eklemeyin.
+5. Railway Variables bölümüne aşağıdaki OAuth değişkenlerini ekleyin:
+   - `YOUTUBE_CLIENT_ID`
+   - `YOUTUBE_CLIENT_SECRET`
+   - `YOUTUBE_REFRESH_TOKEN`
+   Değerleri yalnızca Railway'de saklayın; depoya veya ekran görüntülerine eklemeyin.
+   Servis açılışta salt okunur kanal doğrulaması yapar. Değişkenlerden biri eksik veya geçersizse güvenli şekilde başlatılmaz. 
 
 ## Yerel kontrol
 
