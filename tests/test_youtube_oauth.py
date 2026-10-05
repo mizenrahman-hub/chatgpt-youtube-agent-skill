@@ -4,7 +4,9 @@ from unittest.mock import MagicMock, patch
 from youtube_oauth import (
     OAuthConfigurationError,
     YOUTUBE_SCOPE,
+    YOUTUBE_ANALYTICS_SCOPE,
     build_youtube_client,
+    build_youtube_analytics_client,
     verify_channel_access,
 )
 
@@ -47,6 +49,28 @@ class YouTubeOAuthTests(unittest.TestCase):
             "youtube", "v3", credentials=credentials, cache_discovery=False
         )
         self.assertIs(result, expected_client)
+
+    @patch("youtube_oauth.build")
+    @patch("youtube_oauth.Request")
+    @patch("youtube_oauth.Credentials")
+    def test_analytics_client_uses_readonly_scope(
+        self, credentials_class, request_class, build
+    ):
+        credentials = credentials_class.return_value
+        result = build_youtube_analytics_client(self.environment)
+        credentials_class.assert_called_once_with(
+            token=None,
+            refresh_token="refresh-token",
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id="client-id",
+            client_secret="client-secret",
+            scopes=[YOUTUBE_ANALYTICS_SCOPE],
+        )
+        credentials.refresh.assert_called_once_with(request_class.return_value)
+        build.assert_called_once_with(
+            "youtubeAnalytics", "v2", credentials=credentials, cache_discovery=False
+        )
+        self.assertIs(result, build.return_value)
 
     def test_channel_verification_is_read_only(self):
         youtube = MagicMock()
