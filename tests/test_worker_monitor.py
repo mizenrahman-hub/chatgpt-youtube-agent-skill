@@ -1,11 +1,27 @@
 import os
 import unittest
+import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import worker
 
 
 class WorkerConfigTests(unittest.TestCase):
+    def test_main_initializes_queue_directories_when_enabled(self):
+        with tempfile.TemporaryDirectory() as root:
+            inbox, output = Path(root) / "inbox", Path(root) / "previews"
+            with patch.dict(os.environ, {"SHORTS_ENABLED": "true", "SHORTS_INBOX": str(inbox), "SHORTS_OUTPUT": str(output)}), \
+                 patch.object(worker, "run_once") as scan, \
+                 patch.object(worker.os, "getuid", return_value=10001), \
+                 patch.object(worker.os, "umask"), \
+                 patch("shorts_pipeline.run_queue", return_value=None) as queue:
+                worker.main()
+            self.assertTrue(inbox.is_dir())
+            self.assertTrue(output.is_dir())
+            scan.assert_called_once()
+            queue.assert_called_once()
+
     def test_default_max_results_is_ten(self):
         with patch.dict(os.environ, {}, clear=True):
             self.assertEqual(worker._positive_int("YOUTUBE_SCAN_MAX_RESULTS", 10), 10)
