@@ -5,7 +5,6 @@ import logging
 import os
 import signal
 import threading
-import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from channel_monitor import scan_channel
