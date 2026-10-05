@@ -2,6 +2,7 @@
 
 import logging
 import os
+from pathlib import Path
 
 from channel_monitor import scan_channel
 from youtube_analytics import query_channel_analytics
@@ -61,6 +62,19 @@ def run_once():
 
 
 def main():
+    if _enabled("SHORTS_ENABLED"):
+        # Railway mounts volumes as root. Initialize only the configured job
+        # directories, then run scanning and rendering as the image's worker.
+        os.umask(0o077)
+        for name in ("SHORTS_INBOX", "SHORTS_OUTPUT"):
+            path = Path(os.environ[name])
+            path.mkdir(parents=True, exist_ok=True)
+            if os.getuid() == 0:
+                os.chown(path, 10001, 10001)
+        if os.getuid() == 0:
+            os.setgroups([])
+            os.setgid(10001)
+            os.setuid(10001)
     run_once()
     if _enabled("SHORTS_ENABLED"):
         from shorts_pipeline import run_queue
