@@ -4,7 +4,12 @@ import logging
 import os
 
 from channel_monitor import scan_channel
-from youtube_oauth import build_youtube_client, verify_channel_access
+from youtube_analytics import query_channel_analytics
+from youtube_oauth import (
+    build_youtube_analytics_client,
+    build_youtube_client,
+    verify_channel_access,
+)
 
 
 def _positive_int(name, default, minimum=1):
@@ -16,6 +21,13 @@ def _positive_int(name, default, minimum=1):
     if value < minimum:
         raise SystemExit(f"{name} must be at least {minimum}")
     return value
+
+
+def _enabled(name, default=False):
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def run_once():
@@ -35,6 +47,16 @@ def run_once():
         snapshot["channel_id"],
         len(snapshot["recent_videos"]),
     )
+
+    if _enabled("YOUTUBE_ANALYTICS_ENABLED"):
+        analytics = build_youtube_analytics_client()
+        report = query_channel_analytics(analytics, max_results=max_results)
+        logging.info(
+            "Read-only YouTube Analytics scan complete: channel_rows=%s video_rows=%s",
+            len(report["channel"]),
+            len(report["videos"]),
+        )
+
     return snapshot
 
 
