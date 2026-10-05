@@ -62,6 +62,11 @@ def run_once():
 
 def main():
     run_once()
+    if _enabled("SHORTS_ENABLED"):
+        from shorts_pipeline import run_queue
+        report = run_queue()
+        logging.info("Shorts queue complete: previews=%s; publish=false",
+                     len(report["clips"]) if report else 0)
     logging.info("Scheduled read-only scan finished safely")
 
 
