@@ -25,7 +25,7 @@ def latest_long_video(youtube, channel_id, report_dir):
                     continue
                 duration = v["contentDetails"].get("duration", "")
                 import re
-                m = re.fullmatch(r"PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?", duration)
+                m = re.fullmatch(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", duration)
                 seconds = (int(m.group(1) or 0)*3600 + int(m.group(2) or 0)*60 + int(m.group(3) or 0)) if m else 0
                 if seconds >= 240 and v["snippet"].get("liveBroadcastContent") == "none":
                     result = {"video_id": video_id, "title": v["snippet"]["title"], "duration_seconds": seconds, "language": "de", "status": "awaiting_transcript_and_audio_generation", "youtube_audio_upload": "manual_studio_step_required"}
