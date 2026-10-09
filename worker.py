@@ -118,12 +118,6 @@ def main():
                      before["source_videos"], before["videos_with_srt"],
                      before["videos_missing_srt"], before["queued_jobs"])
         report = run_queue()
-        if _enabled("SHORTS_IMPORT_ENABLED") and report:
-            from youtube_source_import import cleanup_rendered_import
-            imported_id = os.environ.get("SHORTS_IMPORT_VIDEO_ID", "").strip()
-            cleaned = cleanup_rendered_import(inbox, imported_id, report,
-                                              Path(os.environ["SHORTS_OUTPUT"]))
-            logging.info("Temporary imported source cleaned=%s", cleaned)
         logging.info("Shorts queue complete: previews=%s; publish=false",
                      len(report["clips"]) if report else 0)
     logging.info("Scheduled read-only scan finished safely")
