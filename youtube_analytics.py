@@ -21,7 +21,7 @@ def query_channel_analytics(
 
     end = end_date or (date.today() - timedelta(days=1))
     start = end - timedelta(days=days - 1)
-    metrics = "views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage"
+    metrics = "views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,subscribersLost"
 
     channel = analytics.reports().query(
         ids="channel==MINE",
@@ -41,6 +41,7 @@ def query_channel_analytics(
     ).execute()
 
     return {
+        "days": days,
         "start_date": start.isoformat(),
         "end_date": end.isoformat(),
         "channel": _rows(channel),

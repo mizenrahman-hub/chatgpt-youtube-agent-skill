@@ -53,9 +53,11 @@ def run_once():
 
     if _enabled("YOUTUBE_ANALYTICS_ENABLED"):
         report = None
+        report_7d = None
         try:
             analytics = build_youtube_analytics_client()
             report = query_channel_analytics(analytics, max_results=max_results)
+            report_7d = query_channel_analytics(analytics, days=7, max_results=max_results)
         except Exception as exc:
             logging.warning("YouTube Analytics unavailable: %s", type(exc).__name__)
         report_root = Path(os.environ.get("ANALYTICS_REPORT_DIR", os.environ.get("SHORTS_OUTPUT", "/data/shorts-output"))) / "analytics"
@@ -77,6 +79,8 @@ def run_once():
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "channel_snapshot": snapshot,
             "analytics": report,
+            "analytics_7d": report_7d,
+            "revenue_status": "Not available: requires YouTube Analytics monetary read-only scope and verified monetization access",
             "long_video_audit": video_audit,
         }
         target = report_root / "latest.json"
@@ -84,6 +88,7 @@ def run_once():
         staging.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         staging.replace(target)
         logging.info("Analytics report saved: %s", target)
+        logging.info("Analytics availability: 28d=%s 7d=%s revenue=not_configured", bool(report), bool(report_7d))
         logging.info(
             "Read-only YouTube Analytics scan complete: channel_rows=%s video_rows=%s",
             len(report["channel"]) if report else 0,
