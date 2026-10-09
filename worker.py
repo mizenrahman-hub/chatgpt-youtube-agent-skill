@@ -1,6 +1,8 @@
 """Railway job for a single read-only YouTube channel scan."""
 
 import logging
+import json
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 
@@ -52,6 +54,18 @@ def run_once():
     if _enabled("YOUTUBE_ANALYTICS_ENABLED"):
         analytics = build_youtube_analytics_client()
         report = query_channel_analytics(analytics, max_results=max_results)
+        report_root = Path(os.environ.get("ANALYTICS_REPORT_DIR", os.environ.get("SHORTS_OUTPUT", "/data/shorts-output"))) / "analytics"
+        report_root.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "channel_snapshot": snapshot,
+            "analytics": report,
+        }
+        target = report_root / "latest.json"
+        staging = report_root / "latest.json.tmp"
+        staging.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        staging.replace(target)
+        logging.info("Analytics report saved: %s", target)
         logging.info(
             "Read-only YouTube Analytics scan complete: channel_rows=%s video_rows=%s",
             len(report["channel"]),
