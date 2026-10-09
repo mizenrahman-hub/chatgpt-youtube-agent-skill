@@ -54,7 +54,7 @@ def run_once():
     if _enabled("YOUTUBE_ANALYTICS_ENABLED"):
         analytics = build_youtube_analytics_client()
         report = query_channel_analytics(analytics, max_results=max_results)
-        report_root = Path(os.environ.get("ANALYTICS_REPORT_DIR", "/data/analytics"))
+        report_root = Path(os.environ.get("ANALYTICS_REPORT_DIR", os.environ.get("SHORTS_OUTPUT", "/data/shorts-output"))) / "analytics"
         report_root.mkdir(parents=True, exist_ok=True)
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
