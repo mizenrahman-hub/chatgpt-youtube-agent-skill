@@ -161,11 +161,35 @@ def run_job(job_path, output_root, render=False):
     return report
 
 
+
+def discover_jobs(inbox):
+    """Queue local video/SRT pairs without downloading or changing source videos."""
+    for source in sorted(inbox.glob("*.mp4")):
+        subtitles = source.with_suffix(".srt")
+        job_path = source.with_suffix(".json")
+        if not subtitles.is_file() or job_path.exists():
+            continue
+        try:
+            rows = read_srt(subtitles)
+            duration = probe(source)
+            clips = candidates(rows, duration, limit=1)
+        except (ValueError, OSError, subprocess.CalledProcessError):
+            continue
+        if not clips or not clipped_srt(rows, clips[0]["start"], clips[0]["end"]).strip():
+            continue
+        job = {"source": source.name, "subtitles": subtitles.name,
+               "title": source.stem, "clips": clips}
+        temporary = job_path.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
+        temporary.replace(job_path)
+
+
 def run_queue():
     inbox = Path(os.environ["SHORTS_INBOX"])
     output = Path(os.environ["SHORTS_OUTPUT"])
     if not inbox.is_dir():
         raise ValueError("SHORTS_INBOX must be an existing directory")
+    discover_jobs(inbox)
     # One job per run bounds CPU usage. Completed jobs are skipped on later runs.
     for path in sorted(inbox.glob("*.json")):
         report = run_job(path, output, render=False)
