@@ -90,6 +90,15 @@ def run_once():
             len(report["videos"]) if report else 0,
         )
 
+    if _enabled("LONG_VIDEO_DISCOVERY_ENABLED"):
+        try:
+            from long_video_discovery import discover_long_videos
+            root = Path(os.environ.get("ANALYTICS_REPORT_DIR", "/data/shorts-output")) / "analytics"
+            discovered = discover_long_videos(youtube, snapshot["channel_id"], root)
+            logging.info("Long video discovery: total=%s target_matches=%s report=%s", discovered["long_video_count"], discovered["matches"], discovered["path"])
+        except Exception as exc:
+            logging.warning("Long video discovery unavailable: %s", type(exc).__name__)
+
     if _enabled("COMMENT_DRAFTS_ENABLED"):
         try:
             from comment_reply_drafts import collect_drafts
