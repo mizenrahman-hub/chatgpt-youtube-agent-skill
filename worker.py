@@ -107,7 +107,12 @@ def main():
             os.setuid(10001)
     run_once()
     if _enabled("SHORTS_ENABLED"):
-        from shorts_pipeline import run_queue
+        from shorts_pipeline import queue_diagnostics, run_queue
+        inbox = Path(os.environ["SHORTS_INBOX"])
+        before = queue_diagnostics(inbox)
+        logging.info("Shorts input readiness: sources=%s paired_srt=%s missing_srt=%s jobs=%s",
+                     before["source_videos"], before["videos_with_srt"],
+                     before["videos_missing_srt"], before["queued_jobs"])
         report = run_queue()
         logging.info("Shorts queue complete: previews=%s; publish=false",
                      len(report["clips"]) if report else 0)
