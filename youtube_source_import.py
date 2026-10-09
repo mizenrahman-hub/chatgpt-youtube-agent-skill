@@ -58,12 +58,12 @@ def import_video(inbox):
     return {"status": "ready", "video_id": video_id}
 
 def cleanup_rendered_import(inbox, video_id, report, output_root):
-    """Remove only marked temporary imports after every preview has been verified."""
+    """Remove marked temporary imports only after confirmed publication and file checks."""
     if not VIDEO_ID.fullmatch(video_id):
         return False
     inbox = Path(inbox)
     marker = inbox / (video_id + ".imported")
-    if not marker.is_file() or not report or report.get("status") != "awaiting_review":
+    if not marker.is_file() or not report or report.get("status") != "published":
         return False
     clips = report.get("clips", [])
     if not clips:
