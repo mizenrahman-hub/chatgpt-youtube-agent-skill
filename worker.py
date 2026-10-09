@@ -107,6 +107,10 @@ def main():
             os.setuid(10001)
     run_once()
     if _enabled("SHORTS_ENABLED"):
+        if _enabled("SHORTS_IMPORT_ENABLED"):
+            from youtube_source_import import import_video
+            import_result = import_video(Path(os.environ["SHORTS_INBOX"]))
+            logging.info("Owned YouTube source import: status=%s", import_result["status"])
         from shorts_pipeline import queue_diagnostics, run_queue
         inbox = Path(os.environ["SHORTS_INBOX"])
         before = queue_diagnostics(inbox)
