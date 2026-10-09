@@ -60,7 +60,9 @@ def run_once():
             logging.warning("YouTube Analytics unavailable: %s", type(exc).__name__)
         report_root = Path(os.environ.get("ANALYTICS_REPORT_DIR", os.environ.get("SHORTS_OUTPUT", "/data/shorts-output"))) / "analytics"
         report_root.mkdir(parents=True, exist_ok=True)
-        video_audit = [
+        from long_video_seo_audit import audit_videos
+        video_audit = audit_videos(snapshot["recent_videos"], report["videos"] if report else [])
+        legacy_video_audit = [
             {
                 "video_id": video.get("video_id"),
                 "title": video.get("title", ""),
