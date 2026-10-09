@@ -52,14 +52,30 @@ def run_once():
     )
 
     if _enabled("YOUTUBE_ANALYTICS_ENABLED"):
-        analytics = build_youtube_analytics_client()
-        report = query_channel_analytics(analytics, max_results=max_results)
+        report = None
+        try:
+            analytics = build_youtube_analytics_client()
+            report = query_channel_analytics(analytics, max_results=max_results)
+        except Exception as exc:
+            logging.warning("YouTube Analytics unavailable: %s", type(exc).__name__)
         report_root = Path(os.environ.get("ANALYTICS_REPORT_DIR", os.environ.get("SHORTS_OUTPUT", "/data/shorts-output"))) / "analytics"
         report_root.mkdir(parents=True, exist_ok=True)
+        video_audit = [
+            {
+                "video_id": video.get("video_id"),
+                "title": video.get("title", ""),
+                "views_lifetime": video.get("views", 0),
+                "title_length": len(video.get("title", "")),
+                "review_needed": True,
+                "note": "Check impressions, CTR and retention in YouTube Studio before changing metadata.",
+            }
+            for video in snapshot["recent_videos"]
+        ]
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "channel_snapshot": snapshot,
             "analytics": report,
+            "long_video_audit": video_audit,
         }
         target = report_root / "latest.json"
         staging = report_root / "latest.json.tmp"
@@ -68,8 +84,8 @@ def run_once():
         logging.info("Analytics report saved: %s", target)
         logging.info(
             "Read-only YouTube Analytics scan complete: channel_rows=%s video_rows=%s",
-            len(report["channel"]),
-            len(report["videos"]),
+            len(report["channel"]) if report else 0,
+            len(report["videos"]) if report else 0,
         )
 
     return snapshot
