@@ -7,3 +7,6 @@ google-auth>=2.35,<3
 
 # Optional import of a user-specified, owned YouTube video.
 yt-dlp>=2026.3.3,<2027
+
+# Offline multilingual speech synthesis engine (voice models installed separately).
+piper-tts>=1.3,<2
