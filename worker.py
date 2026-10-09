@@ -88,6 +88,16 @@ def run_once():
             len(report["videos"]) if report else 0,
         )
 
+    if _enabled("COMMENT_DRAFTS_ENABLED"):
+        try:
+            from comment_reply_drafts import collect_drafts
+            draft_dir = Path(os.environ.get("COMMENT_DRAFTS_DIR", "/data/comment-drafts"))
+            result = collect_drafts(youtube, snapshot["channel_id"], draft_dir)
+            logging.info("Comment reply drafts: new=%s total=%s publish=false",
+                         result["new_drafts"], result["total_drafts"])
+        except Exception as exc:
+            logging.warning("Comment draft scan unavailable: %s", type(exc).__name__)
+
     return snapshot
 
 
