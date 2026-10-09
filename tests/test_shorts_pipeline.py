@@ -21,6 +21,15 @@ class ShortsTests(unittest.TestCase):
         self.assertEqual(len(clips), 2)
         self.assertEqual(candidates([(0, 2, "merhaba")], 120), [])
 
+    def test_render_rejects_missing_subtitles(self):
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            (root / "source.mp4").touch()
+            job = root / "job.json"
+            job.write_text(json.dumps({"source": "source.mp4", "clips": [{"start": 0, "end": 15}]}))
+            with patch("shorts_pipeline.probe", return_value=20), self.assertRaisesRegex(ValueError, "Subtitles SRT required"):
+                run_job(job, root / "out", True)
+
     def test_invalid_ranges_rejected_before_render(self):
         with tempfile.TemporaryDirectory() as root:
             root = Path(root)
