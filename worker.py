@@ -96,6 +96,8 @@ def run_once():
             root = Path(os.environ.get("ANALYTICS_REPORT_DIR", "/data/shorts-output")) / "analytics"
             discovered = discover_long_videos(youtube, snapshot["channel_id"], root)
             logging.info("Long video discovery: total=%s target_matches=%s report=%s", discovered["long_video_count"], discovered["matches"], discovered["path"])
+            for matched in discovered["matched_videos"]:
+                logging.info("SEO target found: video_id=%s title=%s views=%s", matched["video_id"], matched["title"], matched["views"])
         except Exception as exc:
             logging.warning("Long video discovery unavailable: %s", type(exc).__name__)
 
