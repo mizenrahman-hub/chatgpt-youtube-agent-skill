@@ -6,10 +6,23 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from shorts_pipeline import candidates, clipped_srt, run_job, run_queue
+from shorts_pipeline import candidates, clipped_srt, discover_jobs, run_job, run_queue
 
 
 class ShortsTests(unittest.TestCase):
+    def test_auto_queue_uses_caption_fallback_without_keywords(self):
+        with tempfile.TemporaryDirectory() as root:
+            inbox = Path(root)
+            (inbox / "example.mp4").touch()
+            (inbox / "example.srt").write_text(
+                "1\\n00:00:01,000 --> 00:00:04,000\\nMerhaba arkadaşlar\\n",
+                encoding="utf-8")
+            with patch("shorts_pipeline.probe", return_value=35):
+                discover_jobs(inbox)
+            job = json.loads((inbox / "example.json").read_text(encoding="utf-8"))
+            self.assertEqual(job["clips"][0]["selection"], "caption_fallback")
+            self.assertGreaterEqual(job["clips"][0]["end"] - job["clips"][0]["start"], 15)
+
     def test_subtitles_rebased_and_clipped(self):
         text = clipped_srt([(8, 12, "ilk"), (14, 19, "son"), (20, 22, "dış")], 10, 16)
         self.assertIn("00:00:00,000 --> 00:00:02,000", text)
