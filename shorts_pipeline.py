@@ -22,6 +22,16 @@ def probe(path):
     return float(data["format"]["duration"])
 
 
+def validate_vertical_short(path):
+    """Reject invalid rendered outputs before they are marked review-ready."""
+    result = subprocess.run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(path)],
+                            check=True, capture_output=True, text=True)
+    streams = json.loads(result.stdout)["streams"]
+    video = next((stream for stream in streams if stream.get("codec_type") == "video"), None)
+    if not video or (video.get("width"), video.get("height")) != (1080, 1920):
+        raise ValueError("Rendered Shorts must be 1080x1920 portrait video")
+
+
 def read_srt(path):
     def seconds(value):
         h, m, s = value.replace(",", ".").split(":")
@@ -90,6 +100,10 @@ def run_job(job_path, output_root, render=False):
         a, b = float(clip["start"]), float(clip["end"])
         if not all(map(math.isfinite, (a, b))) or not (0 <= a < b <= duration) or not (15 <= b-a <= 60):
             raise ValueError("Each clip must be within the source and last 15-60 seconds")
+    if render and not rows:
+        raise ValueError("Subtitles SRT required before rendering a Shorts preview")
+    if render and any(not clipped_srt(rows, float(clip["start"]), float(clip["end"])).strip() for clip in clips):
+        raise ValueError("Every Shorts clip must contain synchronized subtitle text")
     # Include source and subtitle contents so edits cannot reuse stale previews.
     digest = hashlib.sha256(job_path.read_bytes())
     for path in (source, subtitle_path):
@@ -134,6 +148,7 @@ def run_job(job_path, output_root, render=False):
                             "-c:a", "aac", "-movflags", "+faststart", str(pending)],
                            cwd=temp, check=True, timeout=600)
             probe(pending)
+            validate_vertical_short(pending)
             # Copy through a sibling temporary file before the atomic rename.
             import shutil
             staging = output / (filename + ".tmp")
