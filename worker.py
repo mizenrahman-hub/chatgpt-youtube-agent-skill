@@ -106,6 +106,20 @@ def run_once():
         except Exception as exc:
             logging.warning("Long video discovery unavailable: %s", type(exc).__name__)
 
+    if _enabled("GERMAN_DUB_PREFLIGHT_ENABLED"):
+        try:
+            from german_dub_preflight import latest_long_video
+            from german_dub_transcript import fetch_turkish_captions
+            report_dir = Path(os.environ.get("SHORTS_OUTPUT", "/data/shorts-output")) / "german-dub"
+            latest = latest_long_video(youtube, snapshot["channel_id"], report_dir)
+            if latest.get("video_id"):
+                captions = fetch_turkish_captions(latest["video_id"], report_dir)
+                logging.info("German dubbing preflight: video_id=%s captions=%s audio=not_generated upload=false", latest["video_id"], captions["status"])
+            else:
+                logging.info("German dubbing preflight: %s", latest["status"])
+        except Exception as exc:
+            logging.warning("German dubbing preflight failed: %s", type(exc).__name__)
+
     if _enabled("COMMENT_DRAFTS_ENABLED"):
         try:
             from comment_reply_drafts import collect_drafts
