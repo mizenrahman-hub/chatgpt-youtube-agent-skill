@@ -51,6 +51,8 @@ def run_once():
         len(snapshot["recent_videos"]),
     )
 
+    logging.info("Automation flags: analytics=%s discovery=%s comment_drafts=%s shorts=%s shorts_import=%s youtube_write=%s", *(_enabled(name) for name in ("YOUTUBE_ANALYTICS_ENABLED", "LONG_VIDEO_DISCOVERY_ENABLED", "COMMENT_DRAFTS_ENABLED", "SHORTS_ENABLED", "SHORTS_IMPORT_ENABLED", "YOUTUBE_WRITE_ENABLED")))
+
     if _enabled("YOUTUBE_ANALYTICS_ENABLED"):
         report = None
         report_7d = None
