@@ -82,6 +82,25 @@ def candidates(rows, duration, limit=3):
     return selected
 
 
+
+def platform_metadata(title, long_video_url, hashtags):
+    """Prepare platform-specific draft copy; never invent a long-video URL."""
+    title = str(title).strip() or "Ramy Yollarda keşif"
+    url = str(long_video_url).strip()
+    tags = [str(tag).strip() for tag in hashtags if str(tag).strip()]
+    if not url.startswith(("https://www.youtube.com/watch?v=", "https://youtu.be/", "https://youtube.com/watch?v=")):
+        url = ""
+    destination = ("Uzun videoyu izle: " + url) if url else "Uzun video bağlantısı henüz eklenmedi."
+    return {
+        "youtube": {"title": title[:100], "description": destination + "\\n" + " ".join(tags[:5])},
+        "instagram": {"caption": title + "\\n" + destination + "\\n" + " ".join(tags[:8])},
+        "tiktok": {"caption": title + " | Devamı Ramy Yollarda kanalında. " + " ".join(tags[:5]),
+                   "long_video_url": url},
+        "facebook": {"caption": title + "\\n" + destination + "\\n" + " ".join(tags[:5])},
+        "long_video_link_verified": bool(url),
+        "publish": False,
+    }
+
 def run_job(job_path, output_root, render=False):
     job_path = Path(job_path).resolve()
     job = json.loads(job_path.read_text(encoding="utf-8"))
@@ -127,6 +146,7 @@ def run_job(job_path, output_root, render=False):
         entry = dict(clip, file=filename, title=clip.get("title", job.get("title", "")),
                      description=f"Uzun videonun tamamı: {job.get('long_video_url', '')}",
                      hashtags=job.get("hashtags", ["#Shorts", "#RamyYollarda"]))
+        entry["platform_metadata"] = platform_metadata(entry["title"], job.get("long_video_url", ""), entry["hashtags"])
         report["clips"].append(entry)
         if not render:
             continue
