@@ -173,6 +173,15 @@ def discover_jobs(inbox):
             rows = read_srt(subtitles)
             duration = probe(source)
             clips = candidates(rows, duration, limit=1)
+            if not clips:
+                # Caption-based fallback is a draft, not a retention prediction.
+                for start, end, caption in rows:
+                    clip_start = max(0.0, min(float(start), duration - 15))
+                    clip_end = min(duration, clip_start + 20)
+                    if clip_end - clip_start >= 15 and clipped_srt(rows, clip_start, clip_end).strip():
+                        clips = [{"start": clip_start, "end": clip_end,
+                                  "reason": caption, "selection": "caption_fallback"}]
+                        break
         except (ValueError, OSError, subprocess.CalledProcessError):
             continue
         if not clips or not clipped_srt(rows, clips[0]["start"], clips[0]["end"]).strip():
