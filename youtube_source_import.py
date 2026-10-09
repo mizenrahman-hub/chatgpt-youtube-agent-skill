@@ -19,6 +19,9 @@ def import_video(inbox):
         raise ValueError("SHORTS_IMPORT_VIDEO_ID must be a valid 11-character video ID")
     inbox = Path(inbox)
     inbox.mkdir(parents=True, exist_ok=True)
+    completed = inbox / (video_id + ".completed")
+    if completed.is_file():
+        return {"status": "already_rendered", "video_id": video_id}
     video = inbox / (video_id + ".mp4")
     subtitles = inbox / (video_id + ".srt")
     if video.is_file() and subtitles.is_file():
@@ -50,4 +53,40 @@ def import_video(inbox):
         return {"status": "download_unavailable", "video_id": video_id}
     if not subtitles.is_file():
         return {"status": "missing_subtitles", "video_id": video_id}
+    # Only downloader-created files receive this marker; user-provided files are never cleaned.
+    (inbox / (video_id + ".imported")).write_text("temporary owned-video import\n")
     return {"status": "ready", "video_id": video_id}
+
+def cleanup_rendered_import(inbox, video_id, report, output_root):
+    """Remove only marked temporary imports after every preview has been verified."""
+    if not VIDEO_ID.fullmatch(video_id):
+        return False
+    inbox = Path(inbox)
+    marker = inbox / (video_id + ".imported")
+    if not marker.is_file() or not report or report.get("status") != "awaiting_review":
+        return False
+    clips = report.get("clips", [])
+    if not clips:
+        return False
+    from shorts_pipeline import validate_vertical_short, probe
+    import json
+    output_root = Path(output_root)
+    found = False
+    for review_path in output_root.glob("*/review.json"):
+        saved = json.loads(review_path.read_text(encoding="utf-8"))
+        if saved != report:
+            continue
+        if all((review_path.parent / clip["file"]).is_file() for clip in clips):
+            for clip in clips:
+                preview = review_path.parent / clip["file"]
+                validate_vertical_short(preview)
+                probe(preview)
+            found = True
+            break
+    if not found:
+        return False
+    # Completed marker is written first to prevent another automatic download.
+    (inbox / (video_id + ".completed")).write_text("rendered preview retained\n")
+    for extension in (".mp4", ".srt", ".json", ".imported"):
+        (inbox / (video_id + extension)).unlink(missing_ok=True)
+    return True
