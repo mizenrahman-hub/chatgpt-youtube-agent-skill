@@ -111,7 +111,8 @@ def run_once():
             from german_dub_preflight import latest_long_video
             from german_dub_transcript import fetch_turkish_captions
             report_dir = Path(os.environ.get("SHORTS_OUTPUT", "/data/shorts-output")) / "german-dub"
-            latest = latest_long_video(youtube, snapshot["channel_id"], report_dir)
+            target_id = os.environ.get("GERMAN_DUB_TARGET_VIDEO_ID", "").strip()
+            latest = {"video_id": target_id} if target_id else latest_long_video(youtube, snapshot["channel_id"], report_dir)
             if latest.get("video_id"):
                 captions = fetch_turkish_captions(latest["video_id"], report_dir)
                 logging.info("German dubbing preflight: video_id=%s captions=%s audio=not_generated upload=false", latest["video_id"], captions["status"])
