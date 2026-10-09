@@ -23,7 +23,9 @@ def fetch_turkish_captions(video_id, output_dir):
             "https://www.youtube.com/watch?v=" + video_id]
     try:
         subprocess.run(args, check=True, capture_output=True, text=True, timeout=180)
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
+        import logging
+        logging.warning("Caption fetch failed: %s", str(exc)[:300])
         return {"status": "captions_unavailable", "video_id": video_id}
     for path in root.glob(video_id + ".tr*.srt"):
         if path.stat().st_size:
