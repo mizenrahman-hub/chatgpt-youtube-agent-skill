@@ -213,6 +213,19 @@ def discover_jobs(inbox):
         temporary.replace(job_path)
 
 
+
+def queue_diagnostics(inbox):
+    """Summarize source readiness without reading, moving, or deleting videos."""
+    sources = sorted(inbox.glob("*.mp4"))
+    subtitle_pairs = sum(source.with_suffix(".srt").is_file() for source in sources)
+    return {
+        "source_videos": len(sources),
+        "videos_with_srt": subtitle_pairs,
+        "videos_missing_srt": len(sources) - subtitle_pairs,
+        "queued_jobs": len(list(inbox.glob("*.json"))),
+    }
+
+
 def run_queue():
     inbox = Path(os.environ["SHORTS_INBOX"])
     output = Path(os.environ["SHORTS_OUTPUT"])
