@@ -54,4 +54,4 @@ def discover_long_videos(youtube, channel_id, output_dir, max_pages=10):
     tmp = root / "full_long_video_audit.json.tmp"
     tmp.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(target)
-    return {"long_video_count": len(videos), "matches": len(report["matches"]), "path": str(target)}
+    return {"long_video_count": len(videos), "matches": len(report["matches"]), "matched_videos": [{"video_id": v["video_id"], "title": v["title"], "views": v["views"]} for v in report["matches"]], "path": str(target)}
